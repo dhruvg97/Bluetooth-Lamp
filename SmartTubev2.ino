@@ -1,5 +1,3 @@
-
-
 #define relay1 8 // red light
 #define relay2 9  // amber light
 #define relay3 11   // green light 
@@ -16,10 +14,11 @@ int buttonState4 =0;          //variable for reading the pushbutton 4
 
 int prevstate = 0;
 
-void setup()
+int currentMode =0;
+int prevMode = 0;
 
-{    
-
+void setup() {
+  
 // Initialise the Arduino data pins for OUTPUT
       
   pinMode(relay1, OUTPUT); // setting all relays as pinouts red
@@ -33,30 +32,62 @@ void setup()
 
   Serial.begin(9600);
   
-  
+
 }
 
- 
-
- void loop()
-
-{
-   // read the state of the pushbutton value:
- 
-
-//message to the receiving device
-
+void loop() {
   
   buttonState1 = digitalRead(button1);
   buttonState2 = digitalRead(button2);
   buttonState3 = digitalRead(button3);
   buttonState4 = digitalRead(button4);
-  
-  if( (buttonState1 ==HIGH) && (buttonState2 == HIGH) && (buttonState3 == LOW) && (buttonState4 == LOW)) {
-    // STATE 1 bins present
+
+  if( (buttonState1 ==HIGH) && (buttonState2 == HIGH) && (buttonState3 == LOW) && (buttonState4 == LOW)){
+    BothBinsPresent();
+    currentMode = 1;
     
-    Serial.println("Both bins present");
+  }
+
+  else if( (buttonState1 == LOW) && (buttonState2 == HIGH) && (buttonState3 == LOW) && (buttonState4 ==LOW)){
+    BinTriggered();
+    currentMode =2;
+  }
+
+  else if( (buttonState1 == HIGH) && (buttonState2 == LOW) && (buttonState3 == HIGH) && (buttonState4 ==LOW)){
+    KarakuriCycle();
+    currentMode =3;
+  }
+
+  else if ((buttonState1 == HIGH) && (buttonState2 == LOW) && (buttonState3 == LOW) && (buttonState4 ==LOW)){
+    Progress();
+    currentMode =4;
+  }
+
+  else if ((buttonState1 == LOW) && (buttonState2 == LOW) && (buttonState4 ==LOW) && (prevstate == 1)){
+    StockOut();
+    currentMode =5;
+  }
+
+  else if ((buttonState1 == HIGH) && (buttonState2 == HIGH) && (buttonState4 ==HIGH )){
+    WrongBin();
+    currentMode =6;
+  }
+
+  else if ((buttonState1 == LOW) && (buttonState2 == LOW) && (buttonState3 == LOW) && (buttonState4 ==HIGH)){
+    StockOutWrongBin();
+    currentMode =7;
+  }
+
+  else{
+    Reset();
+  }
+}
+
+void BothBinsPresent(){
     
+    if (currentMode != prevMode){
+      Serial.println("Both bins present");
+    }
     
     //delay(500); 
     
@@ -64,11 +95,14 @@ void setup()
     delay(1000);
     digitalWrite(relay3,LOW);
     prevstate=0;
-    
-  } 
-  else if( (buttonState1 == LOW) && (buttonState2 == HIGH) && (buttonState3 == LOW) && (buttonState4 ==LOW)){
-    //STATE 2 bin triggered 
-    Serial.println("Bin Triggered");
+    prevMode =currentMode;
+}
+
+void BinTriggered(){
+   //STATE 2 bin triggered 
+    if (currentMode != prevMode){
+      Serial.println("Bin Triggered");
+    }
     //delay(500);
 
     digitalWrite(relay2, HIGH);           // Turns ON amber and red
@@ -77,14 +111,14 @@ void setup()
     digitalWrite(relay2,LOW);
     digitalWrite(relay1, LOW);
     prevstate=0;
-    
-    
- }
+    prevMode =currentMode;
+}
 
-  else if( (buttonState1 == HIGH) && (buttonState2 == LOW) && (buttonState3 == HIGH) && (buttonState4 ==LOW)){
-    //STATE 3 Karakuri cycle
-    
-    Serial.println("Karakuri Cycle");
+void KarakuriCycle(){
+  
+    if (currentMode != prevMode){
+      Serial.println("Karakuri Cycle");
+    }
     //delay(500);
 
     digitalWrite(relay2, HIGH);           // Turns ON amber and red
@@ -93,64 +127,72 @@ void setup()
     digitalWrite(relay2,LOW);
     digitalWrite(relay1, LOW);
     prevstate = 1;
-  }
+    prevMode =currentMode;
+}
 
-  else if ((buttonState1 == HIGH) && (buttonState2 == LOW) && (buttonState3 == LOW) && (buttonState4 ==LOW)){
-    // STATE 4 Progress
-
-    Serial.println("Progress");
-    //delay(500); 
-    
+void Progress(){
+      //delay(500); 
+    if (currentMode != prevMode){
+      Serial.println("Progress");
+    }
     digitalWrite(relay2, HIGH);           // Turns ON amber
     delay(1000);
     digitalWrite(relay2,LOW);
     prevstate = 1;
-    
-  }
+    prevMode =currentMode;
+}
 
-  else if ((buttonState1 == LOW) && (buttonState2 == LOW) && (buttonState4 ==LOW) && (prevstate == 1)){
-    // STATE 5 Stock out 
+void StockOut(){
+  // STATE 5 Stock out 
 
-    Serial.println("Stock out");
+    if (currentMode != prevMode) {
+      Serial.println("Stock out");
+    }
     //delay(500); 
     
     digitalWrite(relay1, HIGH);           // Turns ON red
     delay(1000);
     digitalWrite(relay1,LOW);
     prevstate = 1;
-    
-  } 
+    prevMode =currentMode;
+}
 
-  else if ((buttonState1 == HIGH) && (buttonState2 == HIGH) && (buttonState4 ==HIGH )){
-    // STATE 6 Wrong bin
+void WrongBin(){
+  // STATE 6 Wrong bin
 
-    Serial.println("Wrong bin");
+    if (currentMode != prevMode){
+      Serial.println("Wrong bin");
+    }
     //delay(500); 
     
     digitalWrite(relay1, HIGH);           // Turns ON red
     delay(1000);
     digitalWrite(relay1,LOW);
-    
-    
-  }
+    prevMode =currentMode;
+}
 
-  else if ((buttonState1 == LOW) && (buttonState2 == LOW) && (buttonState3 == LOW) && (buttonState4 ==HIGH)){
-    // STATE 7 Out; Wrong bin
 
-    Serial.println("Out; Wrong bin");
+void StockOutWrongBin(){
+  // STATE 7 Out; Wrong bin
+
+    if (currentMode != prevMode){
+      Serial.println("Out; Wrong bin");
+    }
     //delay(500); 
     
     digitalWrite(relay1, HIGH);           // Turns ON red
     delay(1000);
     digitalWrite(relay1,LOW);
     prevstate = 1;
-    
-  }
+    prevMode =currentMode;
+}
 
-  else{
-    digitalWrite(relay1,LOW);
+void Reset(){
+    digitalWrite(relay1,LOW);                                                                             
     digitalWrite(relay2,LOW);
     digitalWrite(relay3,LOW);
-
+    currentMode =0;
+    prevMode =0;
   }
- }
+
+
